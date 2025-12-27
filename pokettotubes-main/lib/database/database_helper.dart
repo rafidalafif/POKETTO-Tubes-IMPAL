@@ -444,6 +444,8 @@ class DatabaseHelper {
   Future<void> addTransactionsToFolder(int folderId, List<int> transactionIds) async {
     final db = await database;
 
+
+
     // Gunakan transaksi database untuk memastikan semua operasi berhasil.
     await db.transaction((txn) async {
       final batch = txn.batch();
@@ -470,6 +472,18 @@ class DatabaseHelper {
       await batch.commit(noResult: true);
     });
     print('✅ Berhasil menambahkan transaksi ke folder ID: $folderId.');
+  }
+
+  // --- FUNGSI BARU ---
+  // Mengubah nama sebuah folder (kategori).
+  Future<int> updateFolderName(int folderId, String newName) async {
+    final db = await database;
+    return await db.update(
+      'folder',
+      {'name': newName},
+      where: 'folder_id = ?',
+      whereArgs: [folderId],
+    );
   }
 
   // --- FUNGSI BARU ---

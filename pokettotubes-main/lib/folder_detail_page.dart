@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:poketto/database/database_helper.dart';
 
+/// Halaman untuk menampilkan detail transaksi di dalam sebuah kategori (folder).
+/// Halaman ini juga memiliki fitur untuk mengedit nama kategori dan mengeluarkan transaksi.
 class FolderDetailPage extends StatefulWidget {
   final int folderId;
   final String folderName;
@@ -20,6 +22,7 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
   List<Map<String, dynamic>> _transactions = [];
   bool _isLoading = true;
 
+  /// State untuk mode seleksi
   bool _isSelectionMode = false;
   final Set<int> _selectedTransactions = <int>{};
 
@@ -29,6 +32,7 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     _loadTransactions();
   }
 
+  /// Mengambil daftar transaksi yang ada di dalam kategori ini dari database.
   Future<void> _loadTransactions() async {
     final db = DatabaseHelper.instance;
     if (!mounted) return;
@@ -42,6 +46,7 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     }
   }
 
+  /// Memulai mode seleksi saat item ditekan lama.
   void _enterSelectionMode(int transactionId) {
     setState(() {
       _isSelectionMode = true;
@@ -49,6 +54,7 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     });
   }
 
+  /// Keluar dari mode seleksi dan membersihkan item yang dipilih.
   void _exitSelectionMode() {
     setState(() {
       _isSelectionMode = false;
@@ -56,12 +62,13 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     });
   }
 
+  /// Memilih atau membatalkan pilihan semua transaksi yang ada di layar.
   void _selectAll() {
     setState(() {
       if (_selectedTransactions.length == _transactions.length) {
-        _selectedTransactions.clear();
+        _selectedTransactions.clear(); // Jika semua sudah terpilih, batalkan semua
       } else {
-        _selectedTransactions.clear();
+        _selectedTransactions.clear(); // Jika tidak, pilih semua
         for (var tx in _transactions) {
           _selectedTransactions.add(tx['transaction_id'] as int);
         }
@@ -69,12 +76,14 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     });
   }
 
+  /// Menghapus transaksi yang dipilih dari kategori ini.
+  /// Jika kategori menjadi kosong, maka kategori akan dihapus.
   Future<void> _removeSelectedTransactions() async {
     final db = DatabaseHelper.instance;
     final transactionIds = _selectedTransactions.toList();
 
     await db.removeTransactionsFromFolder(widget.folderId, transactionIds);
-    await db.deleteEmptyFolders();
+    await db.deleteEmptyFolders(); // Hapus kategori jika kosong
 
     if (!mounted) return;
 
@@ -83,7 +92,58 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     );
 
     _exitSelectionMode();
-    _loadTransactions();
+    _loadTransactions(); /// Muat ulang data untuk refresh
+  }
+
+  /// Menampilkan dialog untuk mengubah nama kategori.
+  Future<void> _showEditNameDialog() async {
+    final newNameController = TextEditingController();
+    newNameController.text = widget.folderName; // Isi field dengan nama saat ini
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ubah Nama Kategori'),
+        content: TextField(
+          controller: newNameController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Nama kategori baru'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (newNameController.text.trim().isNotEmpty) {
+                Navigator.pop(context, newNameController.text.trim());
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName != widget.folderName) {
+      final db = DatabaseHelper.instance;
+      await db.updateFolderName(widget.folderId, newName);
+
+      // Trik untuk refresh halaman dengan nama baru tanpa state management yang kompleks
+      if (mounted) {
+        Navigator.pop(context); // Kembali ke home
+        Navigator.push( // Buka lagi halaman ini dengan data baru
+          context,
+          MaterialPageRoute(
+            builder: (context) => FolderDetailPage(
+              folderId: widget.folderId,
+              folderName: newName,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -96,14 +156,23 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     );
   }
 
+  /// Membangun AppBar untuk tampilan normal (bukan mode seleksi).
   PreferredSizeWidget _buildNormalAppBar() {
     return AppBar(
       title: Text(widget.folderName),
       backgroundColor: const Color(0xFFED8A35),
       foregroundColor: Colors.black,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          onPressed: _showEditNameDialog,
+          tooltip: 'Ubah Nama',
+        ),
+      ],
     );
   }
 
+  /// Membangun AppBar untuk mode seleksi, dengan tombol "Select All" dan "Remove".
   PreferredSizeWidget _buildSelectionAppBar() {
     final isAllSelected = _selectedTransactions.length == _transactions.length;
     return AppBar(
@@ -127,8 +196,10 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     );
   }
 
+  /// Membangun daftar transaksi di dalam kategori ini.
   Widget _buildTransactionList() {
     if (_transactions.isEmpty) {
+      // Jika kategori kosong, kembali ke halaman sebelumnya secara otomatis.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.pop(context);
       });
@@ -195,6 +266,9 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     );
   }
 
+  // --- Kumpulan fungsi helper untuk konsistensi UI ---
+
+  /// Memformat tanggal dari string menjadi format yang mudah dibaca (contoh: 17 Agustus).
   String _formatDate(String? dateStr) {
     if (dateStr == null) return '';
     try {
@@ -205,11 +279,13 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     }
   }
 
+  /// Memformat angka menjadi format mata uang Rupiah.
   String formatCurrency(double amount) {
     final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp. ', decimalDigits: 0);
     return formatter.format(amount);
   }
 
+  /// Mendapatkan ikon yang sesuai berdasarkan nama kategori.
   IconData getCategoryIcon(String? categoryName) {
     if (categoryName == null) return Icons.help_outline;
     switch (categoryName.toLowerCase()) {
@@ -232,6 +308,7 @@ class _FolderDetailPageState extends State<FolderDetailPage> {
     }
   }
 
+  /// Widget untuk menampilkan satu item transaksi (disalin dari home.dart).
   Widget _transaksiItem({
     required IconData icon,
     required String title,

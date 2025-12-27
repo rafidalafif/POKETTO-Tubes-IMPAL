@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:poketto/analysis_page.dart';
 import 'package:poketto/folder_detail_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:poketto/all_categories_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   OverlayEntry? _overlayEntry;
 
-  // Data dari database
   String userName = 'User';
   double saldo = 0.0;
   double pengeluaran = 0.0;
@@ -36,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
+  /// Memulai mode seleksi untuk mengelompokkan transaksi.
   void _enterSelectionMode() {
     hidePopupMenu();
     setState(() {
@@ -44,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Keluar dari mode seleksi dan membersihkan item yang dipilih.
   void _exitSelectionMode() {
     setState(() {
       _isSelectionMode = false;
@@ -51,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Menampilkan dialog untuk membuat kategori baru.
   Future<void> _showCreateFolderDialog() async {
     final folderNameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -109,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Menampilkan bottom sheet untuk menambahkan transaksi ke kategori yang sudah ada.
   Future<void> _showAddToFolderDialog() async {
     if (_folders.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -168,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Mengambil semua data yang diperlukan untuk halaman utama dari database.
   Future<void> _loadData() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userId = userProvider.userId;
@@ -206,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Memformat angka menjadi format mata uang Rupiah.
   String formatCurrency(double amount) {
     final formatter = NumberFormat.currency(
       locale: 'id_ID',
@@ -215,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return formatter.format(amount);
   }
 
+  /// Mendapatkan ikon yang sesuai berdasarkan nama kategori.
   IconData getCategoryIcon(String? categoryName) {
     if (categoryName == null) return Icons.help_outline;
     switch (categoryName.toLowerCase()) {
@@ -237,6 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Menampilkan menu pop-up untuk "Tambah Transaksi" dan "Tambah Kategori".
   void showPopupMenu() {
     hidePopupMenu();
 
@@ -290,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     child: Row(
                       children: [
-                        Icon(Icons.add, color: Colors.black),
+                        Icon(Icons.create_new_folder_outlined, color: Colors.black),
                         SizedBox(width: 10),
                         Text("Tambah Kategori", style: TextStyle(fontSize: 14)),
                       ],
@@ -313,6 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  /// Metode utama yang membangun seluruh UI halaman utama.
   Widget build(BuildContext context) {
     final currentMonth = DateFormat('MMMM').format(DateTime.now());
 
@@ -334,6 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Membangun bottom bar yang muncul saat dalam mode seleksi.
   Widget _buildSelectionBottomBar() {
     return BottomAppBar(
       elevation: 8,
@@ -374,6 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Membangun daftar transaksi yang bisa dipilih saat dalam mode seleksi.
   Widget _buildSelectionList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,75 +444,228 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Membangun seluruh area konten utama yang bisa di-scroll.
+  Widget _buildNormalContent() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF4F4F2),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(35), topRight: Radius.circular(35)),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(35),
+          topRight: Radius.circular(35),
+        ),
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                Column(
+                  children: [
+                    // REWARD POINTS CARD
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFED8A35),
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            width: 75,
+                            height: 75,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4F4F2),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black.withOpacity(0.15), width: 3),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.stars_rounded, color: Color(0xFFED8A35), size: 24),
+                                  const SizedBox(height: 2),
+                                  Text("$rewardPoints", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF4A4A4A))),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text("Reward", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54)),
+                              SizedBox(height: 2),
+                              Text("Points", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.black)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // BAGIAN KATEGORI
+                    _buildFolderList(),
+
+                    // PEMBATAS "BULAN INI"
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Bulan Ini", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black)),
+                          GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Fitur See All belum tersedia')),
+                              );
+                            },
+                            child: const Text("See all", style: TextStyle(fontSize: 12, color: Colors.black45)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // DAFTAR TRANSAKSI
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: transactions.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.receipt_long_outlined, size: 64, color: Colors.black26),
+                              SizedBox(height: 16),
+                              Text('Belum ada transaksi', style: TextStyle(fontSize: 16, color: Colors.black45)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: transactions.length,
+                          itemBuilder: (context, index) {
+                            final tx = transactions[index];
+                            return _transaksiItem(
+                              icon: getCategoryIcon(tx['category_name']),
+                              title: tx['category_name'] ?? 'Unknown',
+                              tanggal: _formatDate(tx['date']),
+                              nominal: (tx['category_type'] == 'income')
+                                  ? formatCurrency((tx['amount'] as num).toDouble())
+                                  : "-${formatCurrency((tx['amount'] as num).toDouble())}",
+                              isPositive: tx['category_type'] == 'income',
+                              description: tx['description'] ?? '',
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Membangun bagian daftar kategori di halaman utama.
   Widget _buildFolderList() {
-    if (_folders.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final int itemCount = _folders.length > 3 ? 3 : _folders.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Kategori Saya",
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 90,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _folders.length,
-            padding: const EdgeInsets.only(left: 24),
-            itemBuilder: (context, index) {
-              final folder = _folders[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FolderDetailPage(
-                        folderId: folder['folder_id'] as int,
-                        folderName: folder['name'] as String,
-                      ),
-                    ),
-                  ).then((_) {
-                    _loadData();
-                  });
-                },
-                child: Container(
-                  width: 130,
-                  margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey.shade200)),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.folder_open_rounded, color: Color(0xFFED8A35), size: 28),
-                      const Spacer(),
-                      Text(
-                        folder['name'],
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      Text(
-                        '${folder['transaction_count']} items',
-                        style: const TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
-                    ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Kategori Saya",
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
+              ),
+              if (_folders.length > 3)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AllCategoriesPage()),
+                    );
+                  },
+                  child: const Text(
+                    "Lihat Semua",
+                    style: TextStyle(fontSize: 12, color: Colors.black45),
                   ),
                 ),
-              );
-            },
+            ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 8),
+        _folders.isEmpty
+            ? _buildEmptyCategoryPlaceholder()
+            : Column(
+                children: List.generate(itemCount, (index) {
+                  final folder = _folders[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: _kategoriItem(
+                      name: folder['name'],
+                      itemCount: folder['transaction_count'] as int,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FolderDetailPage(
+                              folderId: folder['folder_id'] as int,
+                              folderName: folder['name'] as String,
+                            ),
+                          ),
+                        ).then((_) {
+                          _loadData();
+                        });
+                      },
+                    ),
+                  );
+                }),
+              ),
       ],
     );
   }
 
+  /// Membangun placeholder yang tampil jika belum ada kategori yang dibuat.
+  Widget _buildEmptyCategoryPlaceholder() {
+    return Container(
+      height: 90,
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: const Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.create_new_folder_outlined, color: Colors.grey, size: 28),
+            SizedBox(width: 12),
+            Text(
+              'Belum ada kategori',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Membangun header oranye di bagian atas halaman.
   Widget _buildOrangeHeader(String currentMonth) {
     return Container(
       color: const Color(0xFFED8A35),
@@ -596,120 +760,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNormalContent() {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF4F4F2),
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(35), topRight: Radius.circular(35)),
-      ),
-      child: Transform.translate(
-        offset: const Offset(0, -20),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 30, 24, 0),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFED8A35),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 75,
-                          height: 75,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF4F4F2),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black.withOpacity(0.15), width: 3),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.stars_rounded, color: Color(0xFFED8A35), size: 24),
-                                const SizedBox(height: 2),
-                                Text("$rewardPoints", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF4A4A4A))),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text("Reward", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54)),
-                            SizedBox(height: 2),
-                            Text("Points", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.black)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildFolderList(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Bulan Ini", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black)),
-                      GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur See All belum tersedia')),
-                          );
-                        },
-                        child: const Text("See all", style: TextStyle(fontSize: 12, color: Colors.black45)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: transactions.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.receipt_long_outlined, size: 64, color: Colors.black26),
-                          SizedBox(height: 16),
-                          Text('Belum ada transaksi', style: TextStyle(fontSize: 16, color: Colors.black45)),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadData,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: transactions.length,
-                        itemBuilder: (context, index) {
-                          final tx = transactions[index];
-                          return _transaksiItem(
-                            icon: getCategoryIcon(tx['category_name']),
-                            title: tx['category_name'] ?? 'Unknown',
-                            tanggal: _formatDate(tx['date']),
-                            nominal: (tx['category_type'] == 'income')
-                                ? formatCurrency((tx['amount'] as num).toDouble())
-                                : "-${formatCurrency((tx['amount'] as num).toDouble())}",
-                            isPositive: tx['category_type'] == 'income',
-                            description: tx['description'] ?? '',
-                          );
-                        },
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  /// Membangun bar navigasi utama di bagian bawah halaman.
   Widget _buildMainBottomNav() {
     return Container(
       color: const Color(0xFFF4F4F2),
@@ -766,6 +817,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Memformat tanggal dari string menjadi format yang mudah dibaca (contoh: 17 Agustus).
   String _formatDate(String? dateStr) {
     if (dateStr == null) return '';
     try {
@@ -776,6 +828,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Menampilkan bottom sheet menu profil pengguna.
   void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -810,7 +863,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Handle logout
+  /// Meng-handle proses logout pengguna.
   void _handleLogout() {
     showDialog(
       context: context,
@@ -843,6 +896,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Widget untuk menampilkan satu item transaksi.
   Widget _transaksiItem({
     required IconData icon,
     required String title,
@@ -890,6 +944,36 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Widget untuk menampilkan satu item kategori (yang dibuat pengguna).
+  Widget _kategoriItem({
+    required String name,
+    required int itemCount,
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFDEED9),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(Icons.folder_open_rounded, color: Color(0xFFED8A35), size: 26),
+        ),
+        title: Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        subtitle: Text('$itemCount items', style: const TextStyle(fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: onTap,
       ),
     );
   }
